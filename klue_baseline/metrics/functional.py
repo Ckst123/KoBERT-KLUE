@@ -7,8 +7,8 @@ from scipy.stats import pearsonr
 from seqeval.metrics import f1_score as ner_f1_score
 from seqeval.scheme import IOB2
 
-from klue_baseline.data.klue_mrc import KlueMRCExample
-from klue_baseline.models.dependency_parsing import DPResult
+# from klue_baseline.data.klue_mrc import KlueMRCExample
+# from klue_baseline.models.dependency_parsing import DPResult
 
 from .utils import (
     KLUE_MRC_NUM_QUESTION_TYPE,
@@ -83,7 +83,7 @@ def klue_re_auprc(probs: np.ndarray, labels: np.ndarray) -> Any:
     return np.average(score) * 100.0
 
 
-def klue_dp_uas_macro_f1(preds: List[List[DPResult]], labels: List[List[DPResult]]) -> Any:
+def klue_dp_uas_macro_f1(preds, labels):#(preds: List[List[DPResult]], labels: List[List[DPResult]]) -> Any:
     """KLUE-DP UAS macro f1. (UAS : head correct / LAS : head + type correct)"""
     head_preds = list()
     head_labels = list()
@@ -98,7 +98,7 @@ def klue_dp_uas_macro_f1(preds: List[List[DPResult]], labels: List[List[DPResult
     return sklearn.metrics.f1_score(head_labels.tolist(), head_preds.tolist(), average="macro") * 100.0
 
 
-def klue_dp_uas_micro_f1(preds: List[List[DPResult]], labels: List[List[DPResult]]) -> Any:
+def klue_dp_uas_micro_f1(preds, labels):#(preds: List[List[DPResult]], labels: List[List[DPResult]]) -> Any:
     """KLUE-DP UAS micro f1. (UAS : head correct / LAS : head + type correct)"""
     head_preds = list()
     head_labels = list()
@@ -113,7 +113,7 @@ def klue_dp_uas_micro_f1(preds: List[List[DPResult]], labels: List[List[DPResult
     return sklearn.metrics.f1_score(head_labels.tolist(), head_preds.tolist(), average="micro") * 100.0
 
 
-def klue_dp_las_macro_f1(preds: List[List[DPResult]], labels: List[List[DPResult]]) -> Any:
+def klue_dp_las_macro_f1(preds, labels):#(preds: List[List[DPResult]], labels: List[List[DPResult]]) -> Any:
     """KLUE-DP LAS macro f1. (UAS : head correct / LAS : head + type correct)"""
     # UAS : head correct / LAS : head + type correct
     head_preds = list()
@@ -154,7 +154,7 @@ def klue_dp_las_macro_f1(preds: List[List[DPResult]], labels: List[List[DPResult
     return sklearn.metrics.f1_score(type_labels.tolist(), type_preds.tolist(), average="macro") * 100.0
 
 
-def klue_dp_las_micro_f1(preds: List[List[DPResult]], labels: List[List[DPResult]]) -> Any:
+def klue_dp_las_micro_f1(preds, labels):#(preds: List[List[DPResult]], labels: List[List[DPResult]]) -> Any:
     """KLUE-DP LAS micro f1. (UAS : head correct / LAS : head + type correct)"""
     head_preds = list()
     head_labels = list()
@@ -194,7 +194,7 @@ def klue_dp_las_micro_f1(preds: List[List[DPResult]], labels: List[List[DPResult
     return sklearn.metrics.f1_score(type_labels.tolist(), type_preds.tolist(), average="micro") * 100.0
 
 
-def klue_mrc_em(preds: List[Dict[str, str]], examples: List[List[KlueMRCExample]]) -> Any:
+def klue_mrc_em(preds, examples):#(preds: List[Dict[str, str]], examples: List[List[KlueMRCExample]]) -> Any:
     """KLUE-MRC Exact Match (EM)"""
     preds, examples = preds[0], examples[0]
 
@@ -219,7 +219,7 @@ def klue_mrc_em(preds: List[Dict[str, str]], examples: List[List[KlueMRCExample]
     return np.mean(total_em_scores) * 100.0
 
 
-def klue_mrc_rouge_w(preds: List[Dict[str, str]], examples: List[List[KlueMRCExample]]) -> Any:
+def klue_mrc_rouge_w(preds, examples):#(preds: List[Dict[str, str]], examples: List[List[KlueMRCExample]]) -> Any:
     """KLUE-MRC ROUGE-W"""
     preds, examples = preds[0], examples[0]
     rouge_scores_per_question_type: List[List[float]] = [[], [], []]
