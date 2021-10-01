@@ -25,7 +25,7 @@ def ynat_macro_f1(preds: np.ndarray, targets: np.ndarray) -> Any:
 
 
 def klue_nli_acc(preds: np.ndarray, targets: np.ndarray) -> Any:
-    return (preds == targets).mean() * 100.0
+    return sklearn.metrics.accuracy_score(targets, preds) * 100.0
 
 
 def klue_sts_pearsonr(preds: np.ndarray, labels: np.ndarray) -> Any:
@@ -33,9 +33,9 @@ def klue_sts_pearsonr(preds: np.ndarray, labels: np.ndarray) -> Any:
 
 
 def klue_sts_f1(preds: np.ndarray, labels: np.ndarray) -> Any:
-    threshold = 3
-    preds = np.where(preds >= threshold, 1, 0)
-    labels = np.where(labels >= threshold, 1, 0)
+    # threshold = 3
+    # preds = np.where(preds >= threshold, 1, 0)
+    # labels = np.where(labels >= threshold, 1, 0)
     return sklearn.metrics.f1_score(labels, preds, average="binary") * 100.0
 
 
@@ -63,12 +63,9 @@ def klue_ner_char_macro_f1(preds: np.ndarray, labels: np.ndarray, label_list: Li
     return sklearn.metrics.f1_score(trues, preds, labels=label_indices, average="macro", zero_division=True) * 100.0
 
 
-def klue_re_micro_f1(preds: np.ndarray, labels: np.ndarray, label_list: List[str]) -> Any:
+def klue_re_micro_f1(preds: np.ndarray, labels: np.ndarray) -> Any:
     """KLUE-RE micro f1 (except no_relation)"""
-    no_relation_label_idx = label_list.index("no_relation")
-    label_indices = list(range(len(label_list)))
-    label_indices.remove(no_relation_label_idx)
-    return sklearn.metrics.f1_score(labels, preds, average="micro", labels=label_indices) * 100.0
+    return sklearn.metrics.f1_score(labels, preds, average="micro", labels=list(range(1, 30))) * 100.0
 
 
 def klue_re_auprc(probs: np.ndarray, labels: np.ndarray) -> Any:

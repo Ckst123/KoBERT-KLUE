@@ -20,6 +20,16 @@ $ python3 run_klue.py ynat
 ynat task
 macro_f1 : 85.96
 
+nli task
+accuracy 69.90
+
+stc task
+pearsonr 65.39
+f1 80.90
+
+re
+f1 58.37967834059823
+auprc 57.644041712517335
 ```
 
 ## References
