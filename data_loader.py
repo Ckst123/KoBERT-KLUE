@@ -1,10 +1,10 @@
 from datasets import load_dataset
-from transformers import DataCollatorWithPadding
+from transformers import DataCollatorWithPadding, AutoTokenizer, DataCollatorForTokenClassification
 from tokenization_kobert import KoBertTokenizer
 from torch.utils.data import DataLoader
 
-checkpoint = "monologg/kobert"
-tokenizer = KoBertTokenizer.from_pretrained(checkpoint)
+checkpoint = "klue/bert-base"
+tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
 
 def klue_ynat():
@@ -192,12 +192,100 @@ def klue_re():
     return train_dataloader, eval_dataloader
 
 
+def klue_ner():
+    raw_datasets = load_dataset("klue", "ner")
+    print(raw_datasets)
+    print(raw_datasets['train'][0])
+    
+    def tokenize_function(example):
+        return tokenizer(example["sentence"], truncation=True, padding='max_length', max_length=128)
+
+    def make_labels(example):
+        # if self.tokenizer_type == "xlm-sp":
+        #     strip_char = "▁"
+        # elif self.tokenizer_type == "bert-wp":
+        #     strip_char = "##"
+        strip_char = "##"
+
+        original_clean_tokens = []
+        original_clean_labels = []
+        sentence = ""
+        for token, tag in zip(example['tokens'], example['ner_tags']):
+            sentence += token
+            if token == " ":
+                continue
+            original_clean_tokens.append(token)
+            original_clean_labels.append(tag)
+        
+        sent_words = sentence.split(" ")
+        modi_labels = []
+        # modi_labels.append(12)
+        char_idx = 0
+
+        for word in sent_words:
+            # 안녕, 하세요
+            correct_syllable_num = len(word)
+            tokenized_word = tokenizer.tokenize(word)
+            # case1: 음절 tokenizer --> [안, ##녕]
+            # case2: wp tokenizer --> [안녕]
+            # case3: 음절, wp tokenizer에서 unk --> [unk]
+            # unk규칙 --> 어절이 통채로 unk로 변환, 단, 기호는 분리
+            contain_unk = True if tokenizer.unk_token in tokenized_word else False
+            for i, token in enumerate(tokenized_word):
+                token = token.replace(strip_char, "")
+                if not token:
+                    modi_labels.append(12)
+                    continue
+                modi_labels.append(original_clean_labels[char_idx])
+                if not contain_unk:
+                    char_idx += len(token)
+            if contain_unk:
+                char_idx += correct_syllable_num
+        # modi_labels.append(12)
+        # print(sentence, modi_labels)
+        example['sentence'] = sentence
+        example['labels'] = modi_labels
+        return example
+
+    def make_padding_label(example):
+        l = len(example["input_ids"])
+        labels = example['labels']
+        labels = [-100] + labels + ( [-100] * (l - len(labels) - 1))
+        example['labels'] = labels
+        return example
+        
+
+    tokenized_datasets = raw_datasets.map(make_labels).map(tokenize_function, batched=True).map(make_padding_label)
+    data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
+
+    tokenized_datasets = tokenized_datasets.remove_columns(
+        ['sentence', 'tokens', 'ner_tags']
+    )
+    # tokenized_datasets = tokenized_datasets.rename_column("label", "labels")
+    tokenized_datasets.set_format("torch")
+    print(tokenized_datasets["train"].column_names)
+    print(tokenized_datasets["train"][0])
+    print(tokenizer.convert_ids_to_tokens(tokenized_datasets["train"][0]["input_ids"]))
+    print(tokenized_datasets["train"][0]["labels"])
+
+
+    train_dataloader = DataLoader(
+        tokenized_datasets["train"], shuffle=True, batch_size=8, collate_fn=data_collator
+    )
+    eval_dataloader = DataLoader(
+        tokenized_datasets["validation"], batch_size=8, collate_fn=data_collator
+    )
+
+    return train_dataloader, eval_dataloader
+
+
 data_loaders = {
     'ynat':klue_ynat,
     'nli':klue_nli,
     'sts':klue_sts,
-    're':klue_re
+    're':klue_re,
+    'ner':klue_ner,
 }
 
 if __name__ == '__main__':
-    train_dataloader, eval_dataloader = klue_re()
+    train_dataloader, eval_dataloader = klue_ner()

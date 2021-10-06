@@ -18,18 +18,22 @@ $ python3 run_klue.py ynat
 ## Results
 ```
 ynat task
-macro_f1 : 85.96
+macro_f1 86.44
 
 nli task
-accuracy 69.90
+accuracy 80.2
 
-stc task
-pearsonr 65.39
-f1 80.90
+sts task
+pearsonr 68.65
+f1 82.62
 
-re
-f1 58.37967834059823
-auprc 57.644041712517335
+re task
+f1 67.10
+auprc 69.73
+
+ner task
+char_macro_f1 93.01
+entity_macro_f1 87.76
 ```
 
 ## References

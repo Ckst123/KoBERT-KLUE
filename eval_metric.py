@@ -17,10 +17,16 @@ def metric_re(probs, preds, targets):
     return {'f1': klue_re_micro_f1(preds, targets),
     'auprc':klue_re_auprc(probs, targets)}
 
+def metric_ner(preds, targets):
+    label_list = ["B-PS", "I-PS", "B-LC", "I-LC", "B-OG", "I-OG", "B-DT", "I-DT", "B-TI", "I-TI", "B-QT", "I-QT", "O"]
+    return {'char_macro_f1': klue_ner_char_macro_f1(preds, targets, label_list),
+    'entity_macro_f1':klue_ner_entity_macro_f1(preds, targets, label_list)}
+
 
 metrics = {
     'ynat': metric_ynat,
     'nli' : metric_nli,
     'sts' : metric_sts,
-    're' : metric_re
+    're' : metric_re,
+    'ner': metric_ner
 }

@@ -1,6 +1,6 @@
 from data_loader import data_loaders, tokenizer
 from eval_metric import metrics
-from transformers import AutoModelForSequenceClassification
+from transformers import AutoModelForSequenceClassification, AutoModelForTokenClassification
 import torch
 from tqdm.auto import tqdm
 from transformers import get_scheduler
@@ -10,7 +10,7 @@ import sys
 
 task = sys.argv[1] if len(sys.argv) > 1 else 'ynat'
 
-if task not in ['ynat', 'nli', 'sts', 're']:
+if task not in ['ynat', 'nli', 'sts', 're', 'ner']:
     exit()
 
 train_dataloader, eval_dataloader = data_loaders[task]()
@@ -20,21 +20,23 @@ model_classes = {
     'nli' : AutoModelForSequenceClassification,
     'sts' : AutoModelForSequenceClassification,
     're' : AutoModelForSequenceClassification,
-    
+    'ner' : AutoModelForTokenClassification
 }
 
 num_classes = {
     'ynat': 7,
     'nli': 3,
     'sts': 2,
-    're': 30
+    're': 30,
+    'ner': 13,
 }
 
 num_epoch_task = {
     'ynat': 3,
     'nli': 1,
     'sts': 3,
-    're': 3
+    're': 3,
+    'ner': 3
 }
 
 def train(model, optimizer, lr_scheduler, train_dataloader, num_epochs, num_training_steps, device):
@@ -71,21 +73,32 @@ def eval(model, eval_dataloader, metric, device):
         preds.append(predictions)
         targets.append(batch["labels"])
         probs.append(prob)
-    probs = torch.cat(probs, dim=0).cpu().numpy()
-    preds = torch.cat(preds, dim=-1).cpu().numpy()
-    targets = torch.cat(targets, dim=-1).cpu().numpy()
-    print(preds)
-    print(targets)
-    if task in ['re']:
-        for k, v in metric(probs, preds, targets).items():
-            print(k, v)
-    else:
+
+    if task in ['ner']:
+        preds = torch.cat(preds, dim=0).cpu().numpy().flatten()
+        targets = torch.cat(targets, dim=0).cpu().numpy().flatten()
+        preds = preds[targets != -100]
+        targets = targets[targets != -100]
+        print(preds)
+        print(targets)
         for k, v in metric(preds, targets).items():
             print(k, v)
+    else:
+        probs = torch.cat(probs, dim=0).cpu().numpy()
+        preds = torch.cat(preds, dim=-1).cpu().numpy()
+        targets = torch.cat(targets, dim=-1).cpu().numpy()
+        print(preds)
+        print(targets)
+        if task in ['re']:
+            for k, v in metric(probs, preds, targets).items():
+                print(k, v)
+        else:
+            for k, v in metric(preds, targets).items():
+                print(k, v)
 
 
 def main():
-    checkpoint = "monologg/kobert"
+    checkpoint = "klue/bert-base"
     train_dataloader, eval_dataloader = data_loaders[task]()
     model = model_classes[task].from_pretrained(checkpoint, num_labels=num_classes[task])
     metric = metrics[task]
